@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My first three.js app</title>
+    <style>
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+
+    import * as THREE from "./threejs-study/three.js-dev/build/three.module.js";
+    // // import { OrbitControls } from "./threejs-study/three.js-dev/examples/jsm/controls/OrbitControls.js";
+    import { GLTFLoader } from "./threejs-study/three.js-dev/examples/jsm/loaders/GLTFLoader.js";
+    function main() {
+        const canvas = document.querySelector('#c');
+        const renderer = new THREE.WebGLRenderer({canvas});
+
+        const loader = new GLTFLoader();
+        let scene;
+        scene = new THREE.Scene();
+
+        loader.load('./threejs-study/three.js-dev/examples/models/gltf/Nefertiti/Nefertiti.glb', function (gltf) {
+
+            scene.add(gltf.scene);
+
+        }, undefined, function (error) {
+
+            console.error(error);
+
+        });
+    }
+</script>
+
+</body>
+</html>
+
