@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>cube-rotating-result</title>
+		<style>
+			body { margin: 0; }
+		</style>
+	</head>
+	<body>
+
+		<script type="module">
+			import * as THREE from "./threejs-study/three.js-dev/build/three.module.js";
+
+			let scene, camera, renderer, cube; //global variables
+
+			function initialise(){
+				// Init scene
+				scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera( // value in documentation, by default, almost always
+						75, //field of view in degrees
+						window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
+						0.01, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
+						1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
+				);
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				const geometry = new THREE.BoxGeometry();
+				const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+				cube = new THREE.Mesh( geometry, material );
+				scene.add( cube );
+				camera.position.z = 5; // by default x=y=z=0; z is a camera position on z axis, for visualising
+				// the scene
+			}
+
+			function AnimateCube (){
+				requestAnimationFrame( AnimateCube ); // Request to the browser for animating something. We should define the function, which should be recalled - animate_cube
+													  // In every new shot due to the loop,  the scene would be drawn again.
+				cube.rotation.x += 0.01; // rotation speed
+				cube.rotation.y += 0.01;
+				renderer.render( scene, camera ); // render( scene, camera ) - to visualize the scene and camera
+			}
+
+			function WindowResize(){
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			window.addEventListener('resize', WindowResize, false);
+
+			initialise();
+			AnimateCube();
+
+		</script>
+	</body>
+</html>
