@@ -8,32 +8,85 @@
     </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+
 <script type="module">
 
-    import * as THREE from "./threejs-study/three.js-dev/build/three.module.js";
-    // // import { OrbitControls } from "./threejs-study/three.js-dev/examples/jsm/controls/OrbitControls.js";
-    import { GLTFLoader } from "./threejs-study/three.js-dev/examples/jsm/loaders/GLTFLoader.js";
+    import * as THREE from "./three.js-dev/build/three.module.js";
+    import { OrbitControls } from "./three.js-dev/examples/jsm/controls/OrbitControls.js";
+    import { GLTFLoader } from "./three.js-dev/examples/jsm/loaders/GLTFLoader.js";
+    let renderer, scene, camera;
+    main();
     function main() {
-        const canvas = document.querySelector('#c');
-        const renderer = new THREE.WebGLRenderer({canvas});
+        initialise();
 
         const loader = new GLTFLoader();
-        let scene;
-        scene = new THREE.Scene();
 
-        loader.load('./threejs-study/three.js-dev/examples/models/gltf/Nefertiti/Nefertiti.glb', function (gltf) {
+
+        loader.load('./three.js-dev/examples/models/gltf/Flamingo.glb', function (gltf) {
 
             scene.add(gltf.scene);
 
         }, undefined, function (error) {
 
             console.error(error);
-
+            console.log('TEST');
         });
+
+        render();
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+
+    function render() {
+
+        renderer.render( scene, camera ); // render( scene, camera ) - to visualize the scene and camera
+
+    }
+
+    function initialise(){
+        // Init scene
+        scene = new THREE.Scene();
+
+        // Init camera
+        camera = new THREE.PerspectiveCamera( // value in documentation, by default, almost always
+            40, //field of view in degrees
+            window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
+            1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
+            1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
+        );
+        camera.position.set( - 10, 0, 23 ); // by default x=y=z=0; z is a camera position on z axis, for visualising
+        scene.add( camera );
+
+        // Init renderer
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+
+        // controls
+        // Orbit controls allow the camera to orbit around a target.
+        const controls = new OrbitControls( //Constructor made initialing before using another methods of the class
+            camera, //The camera to be controlled.
+            renderer.domElement //The HTML element used for event listeners.
+        );
+        controls.addEventListener( 'change', render () );
+        controls.minDistance = 10;
+        controls.maxDistance = 50;
+        controls.enablePan = false;
+
+        // light
+        const light = new THREE.PointLight( 0xffffff, 1.5 );
+        camera.add( light );
+
+        render();
+        window.addEventListener('resize', WindowResize, false);
+   }
+
+    function WindowResize(){
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
     }
 </script>
 
 </body>
 </html>
-
