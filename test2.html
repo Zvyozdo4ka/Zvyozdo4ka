@@ -11,56 +11,32 @@
 
 <script type="module">
 
-    import * as THREE from "./three.js-dev/build/three.module.js";
-    import { OrbitControls } from "./three.js-dev/examples/jsm/controls/OrbitControls.js";
-    import { GLTFLoader } from "./three.js-dev/examples/jsm/loaders/GLTFLoader.js";
+    import * as THREE from "./three.js-dev/build/three.module.js"; // importing everything from the module - 'three.module.js''.
+    import { OrbitControls } from "./three.js-dev/examples/jsm/controls/OrbitControls.js"; // importing only single value, exported name OrbitControls should have been defined
+                                                                                            // as 'class OrbitControls' and now visible in current scope (зона видимости).
+    import { GLTFLoader } from "./three.js-dev/examples/jsm/loaders/GLTFLoader.js";         // class GLTFLoader
     let renderer, scene, camera;
-    main();
-    function main() {
-        initialise();
+    initialise();
+    function initialise() {
+        // Init renderer
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        const loader = new GLTFLoader();
+        renderer.outputEncoding = THREE.sRGBEncoding; //Defines the output encoding of the renderer. Default is THREE.LinearEncoding=3000, THREE.sRGBEncoding = 3001.
 
-
-        loader.load('./three.js-dev/examples/models/gltf/Flamingo.glb', function (gltf) {
-
-            scene.add(gltf.scene);
-
-        }, undefined, function (error) {
-
-            console.error(error);
-            console.log('TEST');
-        });
-
-        render();
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-
-    function render() {
-
-        renderer.render( scene, camera ); // render( scene, camera ) - to visualize the scene and camera
-
-    }
-
-    function initialise(){
         // Init scene
         scene = new THREE.Scene();
 
         // Init camera
         camera = new THREE.PerspectiveCamera( // value in documentation, by default, almost always
-            40, //field of view in degrees
+            64, //field of view in degrees
             window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
             1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
-            1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
+            1024 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
         );
-        camera.position.set( - 10, 0, 23 ); // by default x=y=z=0; z is a camera position on z axis, for visualising
-        scene.add( camera );
-
-        // Init renderer
-        renderer = new THREE.WebGLRenderer();
-        renderer.setSize( window.innerWidth, window.innerHeight );
-        document.body.appendChild( renderer.domElement );
+        camera.position.set(-10, 8, 0); // by default x=y=z=0; z is a camera position on z axis, for visualising
+        scene.add(camera);
 
         // controls
         // Orbit controls allow the camera to orbit around a target.
@@ -68,25 +44,76 @@
             camera, //The camera to be controlled.
             renderer.domElement //The HTML element used for event listeners.
         );
-        controls.addEventListener( 'change', render () );
+        controls.addEventListener( //Registers an event handler (обработчик) for the specified type with the object.
+            'change', // type of event, which should be processed.
+            render    // listener - function in JavaScript or EventListener, which will get notification if event have happened.
+        );
         controls.minDistance = 10;
         controls.maxDistance = 50;
         controls.enablePan = false;
 
-        // light
-        const light = new THREE.PointLight( 0xffffff, 1.5 );
-        camera.add( light );
+        // ambient
+        scene.add(new THREE.AmbientLight(0xffffff, .2));
 
-        render();
-        window.addEventListener('resize', WindowResize, false);
-   }
+        // light
+        const light = new THREE.PointLight(0xffffff, 1.5);
+        camera.add(light);
+
+        // model
+        new GLTFLoader().load('./three.js-dev/examples/models/gltf/Nefertiti/Nefertiti.glb', function (gltf) {
+
+            gltf.scene.traverse(function (child) {
+
+                if (child.isMesh) {
+
+                    // glTF currently supports only tangent-space normal maps.
+                    // this model has been modified to demonstrate the use of an object-space normal map.
+
+                    child.material.normalMapType = THREE.ObjectSpaceNormalMap;
+
+                    // attribute normals are not required with an object-space normal map. remove them.
+
+                    child.geometry.deleteAttribute('normal');
+
+                    //
+
+                    child.material.side = THREE.DoubleSide;
+
+                    child.scale.multiplyScalar(0.5);
+
+                    // recenter
+
+                    new THREE.Box3().setFromObject(child).getCenter(child.position).multiplyScalar(-1);
+
+                    scene.add(child);
+
+                }
+
+            } );
+
+            render();
+
+        });
+        window.addEventListener('resize', WindowResize);
+
+    }
 
     function WindowResize(){
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize( window.innerWidth, window.innerHeight );
-    }
-</script>
 
+        render();
+    }
+
+    function render() {
+
+        renderer.render( scene, camera );
+
+    }
+
+</script>
 </body>
 </html>
