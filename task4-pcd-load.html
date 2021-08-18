@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My first three.js app</title>
+    <style>
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+<script type="module">
+
+    import * as THREE from "./three.js-dev/build/three.module.js"; // importing everything from the module - 'three.module.js''.
+    import { OrbitControls } from "./three.js-dev/examples/jsm/controls/OrbitControls.js"; // importing only single value, exported name OrbitControls should have been defined
+                                                                                            // as 'class OrbitControls' and now visible in current scope (зона видимости).
+    import { PCDLoader } from "./three.js-dev/examples/jsm/loaders/PCDLoader.js";         // class PLYLoader
+
+    let renderer, scene, camera;
+
+    initialise();
+
+    function initialise() {
+        // Init renderer
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        renderer.outputEncoding = THREE.sRGBEncoding; //Defines the output encoding of the renderer. Default is THREE.LinearEncoding=3000, THREE.sRGBEncoding = 3001.
+
+        // Init scene
+        scene = new THREE.Scene();
+
+        // Init camera
+        camera = new THREE.PerspectiveCamera( // value in documentation, by default, almost always
+            30, //field of view in degrees
+            window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
+            0.01, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
+            40 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
+        );
+        camera.position.set(3, 0.15, 3); // by default x=y=z=0; z is a camera position on z axis, for visualising
+        scene.add(camera);
+
+        // controls
+        // Orbit controls allow the camera to orbit around a target.
+        const controls = new OrbitControls( //Constructor made initialing before using another methods of the class
+            camera, //The camera to be controlled.
+            renderer.domElement //The HTML element used for event listeners.
+        );
+        controls.addEventListener( //Registers an event handler (обработчик) for the specified type with the object.
+            'change', // type of event, which should be processed.
+            render    // listener - function in JavaScript or EventListener, which will get notification if event have happened.
+        );
+        controls.minDistance = 1;
+        controls.maxDistance = 5000;
+        controls.enablePan = false;
+
+        // ambient
+        scene.add(new THREE.AmbientLight(0xffffff, .2));
+
+        // light
+        const light = new THREE.PointLight(0xffffff, 1.5);
+        camera.add(light);
+
+        // model
+        // pcd file
+        const loader = new PCDLoader();
+        loader.load( './three.js-dev/examples/models/pcd/binary/Zaghetto.pcd', function ( points ) { //works with function geometry, 'let geometry = new BufferGeometry();'
+
+            scene.add( points );
+            render();
+
+        } );
+
+
+        window.addEventListener('resize', WindowResize);
+
+    }
+
+    function WindowResize(){
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function render() {
+
+        renderer.render( scene, camera );
+
+    }
+</script>
+</body>
+</html>
