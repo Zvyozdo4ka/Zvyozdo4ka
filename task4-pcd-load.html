@@ -21,7 +21,8 @@
 
     function initialise() {
         // Init renderer
-        renderer = new THREE.WebGLRenderer();
+        renderer = new THREE.WebGLRenderer( { antialias: true } ); //antialias - whether to perform antialiasing (сглаживание). Default is false
+        renderer.setPixelRatio( window.devicePixelRatio ); // Sets device pixel ratio (соотношение). This is usually used for HiDPI device to prevent bluring output canvas.
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
         renderer.outputEncoding = THREE.sRGBEncoding; //Defines the output encoding of the renderer. Default is THREE.LinearEncoding=3000, THREE.sRGBEncoding = 3001.
@@ -36,7 +37,7 @@
             0.01, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
             40 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
         );
-        camera.position.set(3, 0.15, 3); // by default x=y=z=0; z is a camera position on z axis, for visualising
+        camera.position.set(0, 0, 1); // by default x=y=z=0; z is a camera position on z axis, for visualising
         scene.add(camera);
 
         // controls
@@ -49,12 +50,15 @@
             'change', // type of event, which should be processed.
             render    // listener - function in JavaScript or EventListener, which will get notification if event have happened.
         );
-        controls.minDistance = 1;
-        controls.maxDistance = 5000;
+        controls.minDistance = 0.5;
+        controls.maxDistance = 10;
         controls.enablePan = false;
 
-        // ambient
-        scene.add(new THREE.AmbientLight(0xffffff, .2));
+        // ambient - внешняя среда
+        // AmbientLight( color : Integer, intensity : Float ),
+        // color - (optional) Numeric value of the RGB component of the color. Default is 0xffffff.
+        // intensity - (optional) Numeric value of the light's strength/intensity. Default is 1.
+        scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
 
         // light
         const light = new THREE.PointLight(0xffffff, 1.5);
@@ -65,6 +69,12 @@
         const loader = new PCDLoader();
         loader.load( './three.js-dev/examples/models/pcd/binary/Zaghetto.pcd', function ( points ) { //works with function geometry, 'let geometry = new BufferGeometry();'
 
+            points.geometry.center(); // const geometry = new BufferGeometry(); center() - to center the geometry based on the bounding box.
+            points.geometry.rotateX( Math.PI ); // Rotate the geometry about the X axis. This is typically done as a one time operation, and not during a loop.
+                                                // Use Object3D.rotation for typical real-time mesh rotation.
+                                                // Our object have been upside down (вверх ногами).
+                                                // rotateX ( radians : Float ).
+                                                // Math.PI = 180' = 3.14
             scene.add( points );
             render();
 
