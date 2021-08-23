@@ -12,10 +12,10 @@
 
     import * as THREE from "./three.js-dev/build/three.module.js"; // importing everything from the module - 'three.module.js''.
     import { OrbitControls } from "./three.js-dev/examples/jsm/controls/OrbitControls.js"; // importing only single value, exported name OrbitControls should have been defined
-                                                                                            // as 'class OrbitControls' and now visible in current scope (зона видимости).
+    // as 'class OrbitControls' and now visible in current scope (зона видимости).
     import { PCDLoader } from "./three.js-dev/examples/jsm/loaders/PCDLoader.js";         // class PLYLoader
 
-    let renderer, scene, camera;
+    let camera, scene, raycaster, renderer, stats, mouse;
 
     initialise();
 
@@ -80,8 +80,17 @@
 
         } );
 
-
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
         window.addEventListener('resize', WindowResize);
+
+        document.addEventListener(//Registers an event handler (обработчик) for the specified type with the object.
+            'mousemove', // type of event, which should be processed.
+            onMouseMove ); // listener - function in JavaScript or EventListener, which will get notification if event have happened.
+
+        //window.addEventListener( 'mousemove', onMouseMove, false );
+
+        window.requestAnimationFrame(render);
 
     }
 
@@ -95,11 +104,33 @@
         render();
     }
 
+    function onMouseMove( event ) {
+
+        // calculate mouse position in normalized device coordinates
+        // (-1 to +1) for both components
+
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+    }
+
     function render() {
+
+        // update the picking ray with the camera and mouse position
+        raycaster.setFromCamera( mouse, camera );
+
+        // calculate objects intersecting the picking ray
+        const intersects = raycaster.intersectObjects( scene.children );
+
+        for ( let i = 0; i < intersects.length; i ++ ) {
+
+            intersects[ i ].object.material.color.set( 0xff8f8f );
+        }
 
         renderer.render( scene, camera );
 
     }
+
 </script>
 </body>
 </html>
