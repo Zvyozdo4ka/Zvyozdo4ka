@@ -121,7 +121,16 @@
 
     function render() {
 
-        renderer.render( scene, camera );
+        renderer.render( scene, camera ); // rendered the pcd object on th scene, before changing color.
+
+        /*theta += 0.1;
+
+        camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+        camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+        camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
+        camera.lookAt( scene.position );*/
+
+        camera.updateMatrixWorld();
 
         // update the picking ray with the camera and mouse position
         raycaster.setFromCamera( //method from Raycaster class, setFromCamera ( coords : Vector2, camera : Camera ) : null
@@ -145,7 +154,10 @@
 /////////////////////////////////////
             if ( INTERSECTED != intersects[ 0 ].object ) {
 
-                if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+                if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); // Material - abstract class for materials. Material() creates a generic (общий) material.
+                // .material describe the appearance of objects. They are defined in a renderer-independent way, don't have to rewrite materials if you decide to use a different renderer.
+                // .emissive : Color. Emissive (излучающий) (light) color of the material, essentially a solid (плотный) color unaffected by other lighting. Default is black.
+                // .setHex ( hex : Integer ) : Color. hex — hexadecimal triplet (три значения) format.
                 INTERSECTED = intersects[ 0 ].object;
                 INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();}/*
                 INTERSECTED.material.emissive.setHex( 0xff0000 );
