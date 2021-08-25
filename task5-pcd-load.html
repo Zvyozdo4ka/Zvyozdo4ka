@@ -121,17 +121,45 @@
 
     function render() {
 
+        renderer.render( scene, camera );
+
         // update the picking ray with the camera and mouse position
-        raycaster.setFromCamera( mouse, camera );
+        raycaster.setFromCamera( //method from Raycaster class, setFromCamera ( coords : Vector2, camera : Camera ) : null
+            mouse, // coords — 2D coordinates of the mouse, in normalized device coordinates ---X and Y should be [-1;1].
+            camera // camera — camera from which the ray should originate
+        );
 
         // calculate objects intersecting the picking ray
-        const intersects = raycaster.intersectObjects( scene.children );
+        const intersects = raycaster.intersectObjects( // method from Raycaster class,( object : Object3D) : Array, Array = intersects
+           scene.children // object — The object to check for intersection with the ray.
+                // .children : Object3D, array with object's children.
+        );
 
-        for ( let i = 0; i < intersects.length; i ++ ) {
+        for ( let i = 0;
+              i < intersects.length; // method 'length' for the arrays, to get know the length.
+              i ++ ) {
 
-            intersects[ i ].object.material.color.set( 0xff8fff );
+            intersects[ i ].object.material.color.set( 0xff818f );
             const targetDistance = intersects[ 0 ].distance;
             camera.focusAt( targetDistance ); // using Cinematic camera focusAt method
+/////////////////////////////////////
+            if ( INTERSECTED != intersects[ 0 ].object ) {
+
+                if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+                INTERSECTED = intersects[ 0 ].object;
+                INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();}/*
+                INTERSECTED.material.emissive.setHex( 0xff0000 );
+
+            }
+
+         else {
+
+            if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+            INTERSECTED = null;
+
+        }*/
+//////////////////////////////
         }
         renderer.render( scene, camera ); // Rendering the scene (воспроизведение, представдение). You wouldn't be able to see anything without rendering anything.
                                             // For that, we need a render or animate loop.
