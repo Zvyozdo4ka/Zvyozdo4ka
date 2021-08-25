@@ -31,6 +31,14 @@
         scene = new THREE.Scene();
 
         // Init camera
+        camera = new CinematicCamera(
+            60, //field of view in degrees
+            window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
+            1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
+            1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
+        );
+        camera.setLens( 5 );
+        camera.position.set( 2, 1, 500 );
         camera = new THREE.PerspectiveCamera( // value in documentation, by default, almost always
             30, //field of view in degrees
             window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
