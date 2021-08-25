@@ -80,6 +80,7 @@
                                                 // Our object have been upside down (вверх ногами).
                                                 // rotateX ( radians : Float ).
                                                 // Math.PI = 180' = 3.14
+            points.material.color.setHex( 0x888888 );
             scene.add( points );
             render();
 
@@ -91,7 +92,7 @@
 
         document.addEventListener(//Registers an event handler (обработчик) for the specified type with the object.
             'mousemove', // type of event, which should be processed.
-            onMouseMove ); // listener - function in JavaScript or EventListener, which will get notification if event have happened.
+            render ); // listener - function in JavaScript or EventListener, which will get notification if event have happened.
 
         //window.addEventListener( 'mousemove', onMouseMove, false );
 
@@ -148,7 +149,7 @@
               i < intersects.length; // method 'length' for the arrays, to get know the length.
               i ++ ) {
 
-            intersects[ i ].object.material.color.set( 0xff818f );
+            intersects[ i ].object.material.color.set( 0xff0000 );
             const targetDistance = intersects[ 0 ].distance;
             camera.focusAt( targetDistance ); // using Cinematic camera focusAt method
 /////////////////////////////////////
@@ -159,7 +160,8 @@
                 // .emissive : Color. Emissive (излучающий) (light) color of the material, essentially a solid (плотный) color unaffected by other lighting. Default is black.
                 // .setHex ( hex : Integer ) : Color. hex — hexadecimal triplet (три значения) format.
                 INTERSECTED = intersects[ 0 ].object;
-                INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();}/*
+                INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex(); // .getHex () : Integer. Returns the hexadecimal value of this color.
+            }/*
                 INTERSECTED.material.emissive.setHex( 0xff0000 );
 
             }
