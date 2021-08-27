@@ -26,14 +26,14 @@
     function initialise() {
         // Init camera
         camera = new THREE.PerspectiveCamera(
-            60, //field of view in degrees
+            30, //field of view in degrees
             window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
-            1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
-            1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
+            0.01, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
+            40 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
         );
         //camera.setLens( 32 );
-        camera.position.set(2, 1, 500 );
-       // scene.add(camera);
+        camera.position.set(0,0,1);
+        // scene.add(camera);
 
         // Init scene
         scene = new THREE.Scene();
@@ -44,6 +44,12 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
         renderer.outputEncoding = THREE.sRGBEncoding; //Defines the output encoding of the renderer. Default is THREE.LinearEncoding=3000, THREE.sRGBEncoding = 3001.
+
+        scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
+
+        const light = new THREE.DirectionalLight( 0xffff, 0.35 );
+        light.position.set( 1, 1, 1 ).normalize();
+        scene.add( light );
 
         // controls
         // Orbit controls allow the camera to orbit around a target.
@@ -59,37 +65,36 @@
         controls.maxDistance = 10;
         controls.enablePan = false;
 
-        const geometry = new THREE.BoxGeometry( 200, 200, 200 );
-        const object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0xffffff } ) );
+        /*const geometry = new THREE.BoxGeometry( 100, 100, 100 );
+        const object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0xffff00 } ) );*/
 
-        /*const loader = new PCDLoader();
-
+        const loader = new PCDLoader();
         loader.load( './three.js-dev/examples/models/pcd/binary/Zaghetto.pcd', function ( mesh ) { //works with function geometry, 'let geometry = new BufferGeometry();'
-
             mesh.geometry.center(); // const geometry = new BufferGeometry(); center() - to center the geometry based on the bounding box.
-            mesh.geometry.rotateX( Math.PI ); // Rotate the geometry about the X axis. This is typically done as a one time operation, and not during a loop.
-                                                // Use Object3D.rotation for typical real-time mesh rotation.
-                                                // Our object have been upside down (вверх ногами).
-                                                // rotateX ( radians : Float ).
-                                                // Math.PI = 180' = 3.14
-            mesh.material.color.setHex( 0xfff8f0 );*/
+            mesh.geometry.rotateX(Math.PI); // Rotate the geometry about the X axis. This is typically done as a one time operation, and not during a loop.
+            // Use Object3D.rotation for typical real-time mesh rotation.
+            // Our object have been upside down (вверх ногами).
+            // rotateX ( radians : Float ).
+            // Math.PI = 180' = 3.14
+            mesh.material.color = new THREE.Color(255, 0, 0); //.setHex(0xfff8f0);
 
-            scene.add( object );
-            //render();
-
+            scene.add(mesh);
+            render();
+        });
 
         raycaster = new THREE.Raycaster();
         mouse = new THREE.Vector2();
 
         document.addEventListener(//Registers an event handler (обработчик) for the specified type with the object.
-        'mousemove', // type of event, which should be processed.
-         onMouseMove ); // listener - function in JavaScript or EventListener, which will get notification if event have happened.
+            'mousemove', // type of event, which should be processed.
+            onMouseMove ); // listener - function in JavaScript or EventListener, which will get notification if event have happened.
 
         //window.addEventListener( 'mousemove', onMouseMove, false );
 
         window.addEventListener('resize', WindowResize);
 
         //window.requestAnimationFrame(render);
+
     }
 
     function WindowResize(){
@@ -103,7 +108,7 @@
 
         // calculate mouse position in normalized device coordinates
         // (-1 to +1) for both components
-        event.preventDefault();
+        // event.preventDefault();
 
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
@@ -114,19 +119,6 @@
     function render() {
         renderer.render( scene, camera );
 
-        /*theta += 0.1;
-
-        camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
-        camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
-        camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );*/
-
-        // camera.lookAt( scene.position );
-
-        // Updates the global transform of the object and its descendants (потомки). .updateMatrixWorld ( force : Boolean ) : null
-        camera.updateMatrixWorld();
-
-        // find intersections
-        // update the picking ray with the camera and mouse position
         raycaster.setFromCamera( //method from Raycaster class, setFromCamera ( coords : Vector2, camera : Camera ) : null
             mouse, // coords — 2D coordinates of the mouse, in normalized device coordinates ---X and Y should be [-1;1].
             camera // camera — camera from which the ray should originate
@@ -134,26 +126,27 @@
 
         // calculate objects intersecting the picking ray
         const intersects = raycaster.intersectObjects( // method from Raycaster class,( object : Object3D) : Array, Array = intersects
-           scene.children // object — The object to check for intersection with the ray.
-                // .children : Object3D, array with object's children.
+            scene.children // object — The object to check for intersection with the ray.
+            // .children : Object3D, array with object's children.
         );
-        console.log(intersects);
-        console.log(scene.children);
+        //console.log(intersects);
+        //console.log(scene.children);
         if ( intersects.length > 0 ) { // method 'length' for the arrays, to get know the length.
+            console.log(intersects);
 
             //const targetDistance = intersects[0].distance;
             //camera.focusAt(targetDistance); // using Cinematic camera focusAt method
 
             if (INTERSECTED != intersects[0].object) {
 
-                if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); // Material - abstract class for materials. Material() creates a generic (общий) material.
+                //if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); // Material - abstract class for materials. Material() creates a generic (общий) material.
                 // .material describe the appearance of objects. They are defined in a renderer-independent way, don't have to rewrite materials if you decide to use a different renderer.
                 // .emissive : Color. Emissive (излучающий) (light) color of the material, essentially a solid (плотный) color unaffected by other lighting. Default is black.
                 // .setHex ( hex : Integer ) : Color. hex — hexadecimal triplet (три значения) format.
                 INTERSECTED = intersects[0].object;
-                INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex(); // .getHex () : Integer. Returns the hexadecimal value of this color.
+                INTERSECTED.currentHex = INTERSECTED.material.color; // .getHex () : Integer. Returns the hexadecimal value of this color.
                 // Internal (внутренняя) function for color conversion (преобразование).
-                INTERSECTED.material.emissive.setHex(0xff0080);
+                INTERSECTED.material.color = new THREE.Color(255, 255, 0);
             }
         }
 
@@ -162,8 +155,8 @@
             INTERSECTED = null;
         }
 //////////////////////////////
-            renderer.render( scene, camera ); // Rendering the scene (воспроизведение, представдение). You wouldn't be able to see anything without rendering anything.
-           // For that, we need a render or animate loop.
+       // renderer.render( scene, camera ); // Rendering the scene (воспроизведение, представдение). You wouldn't be able to see anything without rendering anything.
+        // For that, we need a render or animate loop.
     }
 </script>
 </body>
