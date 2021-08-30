@@ -20,6 +20,7 @@
     let INTERSECTED; // crossed, пересеклись
     const radius = 8;
     let theta = 0;
+    raycaster = new THREE.Raycaster();
 
     initialise();
 
@@ -82,7 +83,6 @@
             render();
         });
 
-        raycaster = new THREE.Raycaster();
         mouse = new THREE.Vector2();
 
         document.addEventListener(//Registers an event handler (обработчик) for the specified type with the object.
@@ -124,6 +124,11 @@
             camera // camera — camera from which the ray should originate
         );
 
+        calculate_objects_intersecting_picking_ray (raycaster);
+    }
+
+    function calculate_objects_intersecting_picking_ray (raycaster) {
+
         // calculate objects intersecting the picking ray
         const intersects = raycaster.intersectObjects( // method from Raycaster class,( object : Object3D) : Array, Array = intersects
             scene.children // object — The object to check for intersection with the ray.
@@ -154,9 +159,6 @@
             if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
             INTERSECTED = null;
         }
-//////////////////////////////
-       // renderer.render( scene, camera ); // Rendering the scene (воспроизведение, представдение). You wouldn't be able to see anything without rendering anything.
-        // For that, we need a render or animate loop.
     }
 </script>
 </body>
