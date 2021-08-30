@@ -42,23 +42,23 @@
 
 		scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
 
-       const light = new THREE.DirectionalLight( 0xffff, 0.35 );
-       light.position.set( 1, 1, 1 ).normalize();
-       scene.add( light );
+		const light = new THREE.DirectionalLight( 0xffff, 0.35 );
+		light.position.set( 1, 1, 1 ).normalize();
+		scene.add( light );
 
 		// controls
 		// Orbit controls allow the camera to orbit around a target.
-		const controls = new OrbitControls( //Constructor made initialing before using another methods of the class
-				camera, //The camera to be controlled.
-				renderer.domElement //The HTML element used for event listeners.
-		);
-		controls.addEventListener( //Registers an event handler (обработчик) for the specified type with the object.
-				'change', // type of event, which should be processed.
-				render    // listener - function in JavaScript or EventListener, which will get notification if event have happened.
-		);
-		controls.minDistance = 0.5;
-		controls.maxDistance = 10;
-		controls.enablePan = false;
+		// const controls = new OrbitControls( //Constructor made initialing before using another methods of the class
+		// 		camera, //The camera to be controlled.
+		// 		renderer.domElement //The HTML element used for event listeners.
+		// );
+		// controls.addEventListener( //Registers an event handler (обработчик) for the specified type with the object.
+		// 		'change', // type of event, which should be processed.
+		// 		render    // listener - function in JavaScript or EventListener, which will get notification if event have happened.
+		// );
+		// controls.minDistance = 0.5;
+		// controls.maxDistance = 10;
+		// controls.enablePan = false;
 
 		const geometry = new THREE.BoxGeometry( 200, 200, 200 );
 		const object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0xffffff } ) );
@@ -130,9 +130,6 @@
 			if (INTERSECTED != intersects[0].object) {
 
 				if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); // Material - abstract class for materials. Material() creates a generic (общий) material.
-				// .material describe the appearance of objects. They are defined in a renderer-independent way, don't have to rewrite materials if you decide to use a different renderer.
-				// .emissive : Color. Emissive (излучающий) (light) color of the material, essentially a solid (плотный) color unaffected by other lighting. Default is black.
-				// .setHex ( hex : Integer ) : Color. hex — hexadecimal triplet (три значения) format.
 				INTERSECTED = intersects[0].object;
 				INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex(); // .getHex () : Integer. Returns the hexadecimal value of this color.
 				// Internal (внутренняя) function for color conversion (преобразование).
