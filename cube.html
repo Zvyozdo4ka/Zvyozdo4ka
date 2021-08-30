@@ -1,59 +1,154 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Cube-zoom-in-out</title>
-		<style>
-			body { margin: 0; }
-		</style>
-	</head>
-	<body>
-		<script src="js/three.js"></script>
-		<script>
+<head>
+	<meta charset="utf-8">
+	<title>My first three.js app</title>
+	<style>
+		body { margin: 0; }
+	</style>
+</head>
+<body>
+<script type="module">
+	import * as THREE from "./three.js-dev/build/three.module.js"; // importing everything from the module - 'three.module.js''.
+	import { OrbitControls } from "./three.js-dev/examples/jsm/controls/OrbitControls.js"; // importing only single value, exported name OrbitControls should have been defined
+	// as 'class OrbitControls' and now visible in current scope (зона видимости).
+	import { PCDLoader } from "./three.js-dev/examples/jsm/loaders/PCDLoader.js";         // class PCDLoader
+	import { CinematicCamera } from './three.js-dev/examples/jsm/cameras/CinematicCamera.js';
+	let camera, scene, raycaster, renderer, stats, mouse;
+	let INTERSECTED; // crossed, пересеклись
+	const radius = 8;
+	let theta = 0;
+	initialise();
+	function initialise() {
+		// Init camera
+		camera = new THREE.PerspectiveCamera(
+				60, //field of view in degrees
+				window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
+				1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
+				1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
+		);
+		//camera.setLens( 32 );
+		camera.position.set(2, 1, 500 );
+		// scene.add(camera);
 
-			let scene, camera, renderer, cube; //global variables
+		// Init scene
+		scene = new THREE.Scene();
+		// Init renderer
+		renderer = new THREE.WebGLRenderer( { antialias: true } ); //antialias - whether to perform antialiasing (сглаживание). Default is false
+		renderer.setPixelRatio( window.devicePixelRatio ); // Sets device pixel ratio (соотношение). This is usually used for HiDPI device to prevent bluring output canvas.
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		document.body.appendChild(renderer.domElement);
+		renderer.outputEncoding = THREE.sRGBEncoding; //Defines the output encoding of the renderer. Default is THREE.LinearEncoding=3000, THREE.sRGBEncoding = 3001.
 
-			function initialise(){
-				// Init scene
-				scene = new THREE.Scene();
-				camera = new THREE.PerspectiveCamera( // value in documentation, by default, almost always
-						75, //field of view in degrees
-						window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
-						0.01, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
-						1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
-				);
+		scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
 
-				renderer = new THREE.WebGLRenderer();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+       const light = new THREE.DirectionalLight( 0xffff, 0.35 );
+       light.position.set( 1, 1, 1 ).normalize();
+       scene.add( light );
 
-				const geometry = new THREE.BoxGeometry();
-				const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-				cube = new THREE.Mesh( geometry, material );
-				scene.add( cube );
-				camera.position.z = 5; // by default x=y=z=0; z is a camera position on z axis, for visualising
-				// the scene
+		// controls
+		// Orbit controls allow the camera to orbit around a target.
+		const controls = new OrbitControls( //Constructor made initialing before using another methods of the class
+				camera, //The camera to be controlled.
+				renderer.domElement //The HTML element used for event listeners.
+		);
+		controls.addEventListener( //Registers an event handler (обработчик) for the specified type with the object.
+				'change', // type of event, which should be processed.
+				render    // listener - function in JavaScript or EventListener, which will get notification if event have happened.
+		);
+		controls.minDistance = 0.5;
+		controls.maxDistance = 10;
+		controls.enablePan = false;
+
+		const geometry = new THREE.BoxGeometry( 200, 200, 200 );
+		const object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0xffffff } ) );
+
+		/*const loader = new PCDLoader();
+        loader.load( './three.js-dev/examples/models/pcd/binary/Zaghetto.pcd', function ( mesh ) { //works with function geometry, 'let geometry = new BufferGeometry();'
+            mesh.geometry.center(); // const geometry = new BufferGeometry(); center() - to center the geometry based on the bounding box.
+            mesh.geometry.rotateX( Math.PI ); // Rotate the geometry about the X axis. This is typically done as a one time operation, and not during a loop.
+                                                // Use Object3D.rotation for typical real-time mesh rotation.
+                                                // Our object have been upside down (вверх ногами).
+                                                // rotateX ( radians : Float ).
+                                                // Math.PI = 180' = 3.14
+            mesh.material.color.setHex( 0xfff8f0 );*/
+
+		scene.add( object );
+		//render();
+
+
+		raycaster = new THREE.Raycaster();
+		mouse = new THREE.Vector2();
+		document.addEventListener(//Registers an event handler (обработчик) for the specified type with the object.
+				'mousemove', // type of event, which should be processed.
+				onMouseMove ); // listener - function in JavaScript or EventListener, which will get notification if event have happened.
+		//window.addEventListener( 'mousemove', onMouseMove, false );
+		window.addEventListener('resize', WindowResize);
+		//window.requestAnimationFrame(render);
+	}
+	function WindowResize(){
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+	}
+	function onMouseMove( event ) {
+		// calculate mouse position in normalized device coordinates
+		// (-1 to +1) for both components
+		event.preventDefault();
+
+		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+		mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+		render();
+
+	}
+
+	function render() {
+		renderer.render( scene, camera );
+
+		/*theta += 0.1;
+        camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+        camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+        camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );*/
+		// camera.lookAt( scene.position );
+		// Updates the global transform of the object and its descendants (потомки). .updateMatrixWorld ( force : Boolean ) : null
+		camera.updateMatrixWorld();
+		// find intersections
+		// update the picking ray with the camera and mouse position
+		raycaster.setFromCamera( //method from Raycaster class, setFromCamera ( coords : Vector2, camera : Camera ) : null
+				mouse, // coords — 2D coordinates of the mouse, in normalized device coordinates ---X and Y should be [-1;1].
+				camera // camera — camera from which the ray should originate
+		);
+		// calculate objects intersecting the picking ray
+		const intersects = raycaster.intersectObjects( // method from Raycaster class,( object : Object3D) : Array, Array = intersects
+				scene.children // object — The object to check for intersection with the ray.
+				// .children : Object3D, array with object's children.
+		);
+		console.log(intersects);
+		console.log(scene.children);
+		if ( intersects.length > 0 ) { // method 'length' for the arrays, to get know the length.
+			//const targetDistance = intersects[0].distance;
+			//camera.focusAt(targetDistance); // using Cinematic camera focusAt method
+
+			if (INTERSECTED != intersects[0].object) {
+
+				if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); // Material - abstract class for materials. Material() creates a generic (общий) material.
+				// .material describe the appearance of objects. They are defined in a renderer-independent way, don't have to rewrite materials if you decide to use a different renderer.
+				// .emissive : Color. Emissive (излучающий) (light) color of the material, essentially a solid (плотный) color unaffected by other lighting. Default is black.
+				// .setHex ( hex : Integer ) : Color. hex — hexadecimal triplet (три значения) format.
+				INTERSECTED = intersects[0].object;
+				INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex(); // .getHex () : Integer. Returns the hexadecimal value of this color.
+				// Internal (внутренняя) function for color conversion (преобразование).
+				INTERSECTED.material.emissive.setHex(0xff0080);
 			}
-
-			function AnimateCube (){
-				requestAnimationFrame( AnimateCube ); // Request to the browser for animating something. We should define the function, which should be recalled - animate_cube
-													  // In every new shot due to the loop,  the scene would be drawn again.
-				cube.rotation.x += 0.01; // rotation speed
-				cube.rotation.y += 0.01;
-				renderer.render( scene, camera ); // render( scene, camera ) - to visualize the scene and camera
-			}
-
-			function WindowResize(){
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-			}
-
-			window.addEventListener('resize', WindowResize, false);
-
-			initialise();
-			AnimateCube();
-
-		</script>
-	</body>
+		}
+		else {
+			if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+			INTERSECTED = null;
+		}
+//////////////////////////////
+		renderer.render( scene, camera ); // Rendering the scene (воспроизведение, представдение). You wouldn't be able to see anything without rendering anything.
+		// For that, we need a render or animate loop.
+	}
+</script>
+</body>
 </html>
