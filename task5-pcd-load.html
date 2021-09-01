@@ -14,13 +14,15 @@
     import { OrbitControls } from "./three.js-dev/examples/jsm/controls/OrbitControls.js"; // importing only single value, exported name OrbitControls should have been defined
     // as 'class OrbitControls' and now visible in current scope (зона видимости).
     import { PCDLoader } from "./three.js-dev/examples/jsm/loaders/PCDLoader.js";         // class PCDLoader
+    import * as BufferGeometryUtils from './three.js-dev/examples/jsm/utils/BufferGeometryUtils.js';
     import { CinematicCamera } from './three.js-dev/examples/jsm/cameras/CinematicCamera.js';
 
     let camera, scene, raycaster, renderer, stats, mouse;
     let INTERSECTED; // crossed, пересеклись
-    const radius = 8;
-    let theta = 0;
+    //const radius = 8;
+
     raycaster = new THREE.Raycaster();
+    let mesh, loader;
 
     initialise();
 
@@ -32,9 +34,9 @@
             0.01, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
             40 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
         );
-        //camera.setLens( 32 );
+
         camera.position.set(0,0,1);
-        // scene.add(camera);
+
 
         // Init scene
         scene = new THREE.Scene();
@@ -46,11 +48,11 @@
         document.body.appendChild(renderer.domElement);
         renderer.outputEncoding = THREE.sRGBEncoding; //Defines the output encoding of the renderer. Default is THREE.LinearEncoding=3000, THREE.sRGBEncoding = 3001.
 
-        scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
+        /*scene.add( new THREE.AmbientLight( 0xffffff, 0.3 ) );
 
         const light = new THREE.DirectionalLight( 0xffff, 0.35 );
         light.position.set( 1, 1, 1 ).normalize();
-        scene.add( light );
+        scene.add( light );*/
 
         // controls
         // Orbit controls allow the camera to orbit around a target.
@@ -69,7 +71,7 @@
         /*const geometry = new THREE.BoxGeometry( 100, 100, 100 );
         const object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: 0xffff00 } ) );*/
 
-        const loader = new PCDLoader();
+        loader = new PCDLoader();
         loader.load( './three.js-dev/examples/models/pcd/binary/Zaghetto.pcd', function ( mesh ) { //works with function geometry, 'let geometry = new BufferGeometry();'
             mesh.geometry.center(); // const geometry = new BufferGeometry(); center() - to center the geometry based on the bounding box.
             mesh.geometry.rotateX(Math.PI); // Rotate the geometry about the X axis. This is typically done as a one time operation, and not during a loop.
@@ -77,7 +79,7 @@
             // Our object have been upside down (вверх ногами).
             // rotateX ( radians : Float ).
             // Math.PI = 180' = 3.14
-            mesh.material.color = new THREE.Color(255, 0, 0); //.setHex(0xfff8f0);
+            mesh.material.color = new THREE.Color("white"); //.setHex(0xfff8f0);
 
             scene.add(mesh);
             render();
@@ -86,13 +88,17 @@
         mouse = new THREE.Vector2();
 
         document.addEventListener(//Registers an event handler (обработчик) for the specified type with the object.
-            'mousemove', // type of event, which should be processed.
+            "pointermove", //'mousemove', // type of event, which should be processed.
             onMouseMove ); // listener - function in JavaScript or EventListener, which will get notification if event have happened.
 
         //window.addEventListener( 'mousemove', onMouseMove, false );
 
         window.addEventListener('resize', WindowResize);
+        // calculate_objects_intersecting_picking_ray (raycaster, mouse, camera);
+        // render();
 
+        // calculate_objects_intersecting_picking_ray (raycaster, mouse, camera);
+        // render();
         //window.requestAnimationFrame(render);
 
     }
@@ -112,53 +118,66 @@
 
         mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
         mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        calculate_objects_intersecting_picking_ray (raycaster, mouse, camera);
         render();
-
+        //onMouseMove(event);
     }
 
     function render() {
-        renderer.render( scene, camera );
 
+        renderer.render( scene, camera );
+    }
+
+    function calculate_objects_intersecting_picking_ray (raycaster, mouse, camera) {
+
+        // camera.position.x = 8; //radius; //* Math.sin( THREE.MathUtils.degToRad( theta ) );
+        // camera.position.y = 8; //radius; //* Math.sin( THREE.MathUtils.degToRad( theta ) );
+        // camera.position.z = 8; //radius; //* Math.cos( THREE.MathUtils.degToRad( theta ) );
+         console.log (camera.position.y);
+        //theta += 0.1;
+        camera.lookAt( scene.position );
+
+        camera.updateMatrixWorld();
         raycaster.setFromCamera( //method from Raycaster class, setFromCamera ( coords : Vector2, camera : Camera ) : null
             mouse, // coords — 2D coordinates of the mouse, in normalized device coordinates ---X and Y should be [-1;1].
             camera // camera — camera from which the ray should originate
         );
 
-        calculate_objects_intersecting_picking_ray (raycaster);
-    }
+        const points = scene.getObjectByName( 'Zaghetto.pcd' ); //name -- String to match to the children's Object3D.name property.
+        // Searches through an object and its children, starting with the object itself, and returns the first with a matching name.
+        // Note that for most objects the name is an empty string by default. You will have to set it manually to make use of this method.
 
-    function calculate_objects_intersecting_picking_ray (raycaster) {
-
-        // calculate objects intersecting the picking ray
         const intersects = raycaster.intersectObjects( // method from Raycaster class,( object : Object3D) : Array, Array = intersects
-            scene.children // object — The object to check for intersection with the ray.
-            // .children : Object3D, array with object's children.
+            scene.children // points // // .children : Object3D, array with object's children.
         );
-        //console.log(intersects);
-        //console.log(scene.children);
+
         if ( intersects.length > 0 ) { // method 'length' for the arrays, to get know the length.
-            console.log(intersects);
+           if (INTERSECTED != intersects[0].object) {
 
-            //const targetDistance = intersects[0].distance;
-            //camera.focusAt(targetDistance); // using Cinematic camera focusAt method
+            if (INTERSECTED) {INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); // Material - abstract class for materials. Material() creates a generic (общий) material.
+               console.log("888888");}
 
-            if (INTERSECTED != intersects[0].object) {
-
-                //if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); // Material - abstract class for materials. Material() creates a generic (общий) material.
-                // .material describe the appearance of objects. They are defined in a renderer-independent way, don't have to rewrite materials if you decide to use a different renderer.
-                // .emissive : Color. Emissive (излучающий) (light) color of the material, essentially a solid (плотный) color unaffected by other lighting. Default is black.
-                // .setHex ( hex : Integer ) : Color. hex — hexadecimal triplet (три значения) format.
-                INTERSECTED = intersects[0].object;
-                INTERSECTED.currentHex = INTERSECTED.material.color; // .getHex () : Integer. Returns the hexadecimal value of this color.
-                // Internal (внутренняя) function for color conversion (преобразование).
-                INTERSECTED.material.color = new THREE.Color(255, 255, 0);
+            INTERSECTED = intersects[0].object;
+            INTERSECTED.currentHex = INTERSECTED.material.color.getHex(); // : Integer. Returns the hexadecimal value of this color. Internal (внутренняя) function for color conversion (преобразование).
+            INTERSECTED.material.color.setHex(0xff0000);
             }
         }
 
+        //else if (INTERSECTED !== null) {
         else {
-            if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+            console.log(INTERSECTED);
+            if ( INTERSECTED ) {
+
+                INTERSECTED.material.color.setHex (INTERSECTED.currentHex); //color = new THREE.Color("yellow");
+                console.log("22");
+               // console.log(INTERSECTED);
+            }
+                //INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
             INTERSECTED = null;
         }
+        //calculate_objects_intersecting_picking_ray (raycaster, mouse, camera);
+        render();
+
     }
 </script>
 </body>
