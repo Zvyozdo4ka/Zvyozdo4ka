@@ -49,7 +49,7 @@
             render    // listener - function in JavaScript or EventListener, which will get notification if event have happened.
         );
         controls.minDistance = 0.001;
-        controls.maxDistance = 8;
+        controls.maxDistance = 80;
         controls.enablePan = false;
 
         // ambient
@@ -64,15 +64,36 @@
         //var loader = new THREE.PLYLoader();
         var group = new THREE.Object3D();
         var loader = new PLYLoader();
-        loader.load( './three.js-dev/examples/models/ply/binary/fused_changed.ply', function ( geometry ) { //works with function geometry, 'let geometry = new BufferGeometry();'
+
+        var particles;
+
+        loader.load( './three.js-dev/examples/models/ply/binary/model.ply', function ( geometry ) { //works with function geometry, 'let geometry = new BufferGeometry();'
+
+            console.log(geometry);
+
+            particles = geometry.attributes.color.count; // 298892 points
+            console.log(particles);
+
+            var positions = [];
+            var colors = [];
+
+            var color = new THREE.Color();
+
+            positions = geometry.attributes.position;
+            colors = geometry.attributes.color;
+
+            if (positions===colors) {console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!");}
+
+            console.log(positions);
+            console.log(colors);
 
             var material = new THREE.PointsMaterial({
-                color: 0xffffff,
+                color: 0xff912f,
                 size: 0.01,
                 opacity: 0.6,
                 transparent: true,
                 blending: THREE.AdditiveBlending,
-                //map: generateSprite()
+                vertexColors: true
             });
 
             group = new THREE.Points(geometry, material);
@@ -86,7 +107,6 @@
 
             scene.add( group );
             render();
-
         } );
 
         window.addEventListener('resize', WindowResize);
