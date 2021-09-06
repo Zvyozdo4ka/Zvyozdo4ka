@@ -34,9 +34,9 @@
             35, //field of view in degrees
             window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
             1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
-            15 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
+            40 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
         );
-        camera.position.set(3, 0.15, 3); // by default x=y=z=0; z is a camera position on z axis, for visualising
+        camera.position.set(0, 0, 30); // by default x=y=z=0; z is a camera position on z axis, for visualising
         scene.add(camera);
 
         // controls
@@ -72,8 +72,10 @@
 
             mesh.position.y = - 0.2;
             mesh.position.z = 0.3;
-            mesh.rotation.x = - Math.PI / 2;
-            mesh.scale.multiplyScalar( 0.001 );
+            mesh.rotation.x = - Math.PI*0;
+            mesh.rotation.y = - Math.PI*0.8;
+            mesh.scale.multiplyScalar( 0.01 );
+            console.log(mesh.geometry);
 
             mesh.castShadow = true;
             mesh.receiveShadow = true;
