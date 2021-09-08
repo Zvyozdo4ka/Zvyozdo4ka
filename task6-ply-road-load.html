@@ -74,13 +74,6 @@
             particles = geometry.attributes.color.count; // 298892 points
             console.log(particles);
 
-            // var positions = [];
-            // var colors = [];
-
-            setPoints();
-
-            function setPoints() {
-
                 var positions = geometry.attributes.position.array; // x, y, z is going in sequence in array positions
                 var colors = geometry.attributes.color.array; // r, g, b is going in sequence in array colors
                 var x=[], y=[], z=[], index, r=[], g=[], b=[];
@@ -100,11 +93,44 @@
 
                     j=j+1;
                 }
+// Arrays x, y, z contain coordinate of the points respectively, Arrays r, b, b contain colors respectively.
+
+            const position_p = [];
+            const color_p = [];
+            const color = new THREE.Color();
+            var x_p, y_p, z_p, r_p, g_p, b_p;
+
+            for ( var k = 0; k < particles; k++ ) {
+
+                // positions
+
+               x_p = x[k];
+               y_p = y[k];
+               z_p = z[k];
+
+                position_p.push( x_p, y_p, z_p );
+
+                // colors
+
+              r_p = Math.trunc(r[k]*256/100);
+              g_p = Math.trunc(g[k]*256/100);
+              b_p = Math.trunc(b[k]*256/100);
+
+              console.log (k);
+              console.log (b_p);
+
+                color.setRGB( r_p, g_p, b_p );
+
+                color_p.push( color.r, color.g, color.b );
+
             }
-/// Arrays x, y, z contain coordinate of the points respectively, Arrays r, b, b contain colors respectively.
+
+            geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( position_p, 3 ) );
+            geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( color_p, 3 ) );
+
 
             var material = new THREE.PointsMaterial({
-                color: 0xbf9121,
+              //  color: 0xbf9121,
                 size: 0.01,
                 opacity: 0.6,
                 transparent: true,
