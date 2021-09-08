@@ -74,21 +74,37 @@
             particles = geometry.attributes.color.count; // 298892 points
             console.log(particles);
 
-            var positions = [];
-            var colors = [];
+            // var positions = [];
+            // var colors = [];
 
-            var color = new THREE.Color();
+            setPoints();
 
-            positions = geometry.attributes.position;
-            colors = geometry.attributes.color;
+            function setPoints() {
 
-            if (positions===colors) {console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!");}
+                var positions = geometry.attributes.position.array; // x, y, z is going in sequence in array positions
+                var colors = geometry.attributes.color.array; // r, g, b is going in sequence in array colors
+                var x=[], y=[], z=[], index, r=[], g=[], b=[];
 
-            console.log(positions);
-            console.log(colors);
+                console.log(colors);
+
+                var j=0;
+
+                for (var i=0; i<positions.length; i=i+3){
+                    x[j]=positions[i];
+                    y[j]=positions[i+1];
+                    z[j]=positions[i+2];
+
+                    r[j]=colors[i];
+                    g[j]=colors[i+1];
+                    b[j]=colors[i+2];
+
+                    j=j+1;
+                }
+            }
+/// Arrays x, y, z contain coordinate of the points respectively, Arrays r, b, b contain colors respectively.
 
             var material = new THREE.PointsMaterial({
-                color: 0xff912f,
+                color: 0xbf9121,
                 size: 0.01,
                 opacity: 0.6,
                 transparent: true,
@@ -96,14 +112,19 @@
                 vertexColors: true
             });
 
+            console.log(material);
+
             group = new THREE.Points(geometry, material);
+
             group.sortParticles = true;
-            // geometry.computeVertexNormals(); // Computes vertex normals by averaging face normals.
+            console.log (geometry.computeVertexNormals()); // Computes vertex normals by averaging face normals.
 
             group.position.y = 2;
             group.position.z = -9;
             group.rotation.x = - Math.PI*1;
             group.rotation.y = - Math.PI*2;
+
+            console.log(group.count); // undefined
 
             scene.add( group );
             render();
