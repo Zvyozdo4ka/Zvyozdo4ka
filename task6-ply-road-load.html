@@ -35,7 +35,7 @@
             0.1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
             1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
         );
-        camera.position.set(0, 0, 5); // by default x=y=z=0; z is a camera position on z axis, for visualising
+        camera.position.set(0, 0, 8); // by default x=y=z=0; z is a camera position on z axis, for visualising
         scene.add(camera);
 
         // controls
@@ -53,10 +53,10 @@
         controls.enablePan = false;
 
         // ambient
-        scene.add(new THREE.AmbientLight(0xffffff, .2));
+        // scene.add(new THREE.AmbientLight(0xffffff, .2));
 
         // light
-        const light = new THREE.PointLight(0xffffff, 1.5);
+        const light = new THREE.PointLight(0xffffff, 1);
         camera.add(light);
 
         // model
@@ -107,17 +107,16 @@
                x_p = x[k];
                y_p = y[k];
                z_p = z[k];
+               position_p.push( x_p, y_p, z_p );
 
-                position_p.push( x_p, y_p, z_p );
+              r_p = r[k];//Math.trunc(r[k]*256/100);
+              g_p = g[k];//Math.trunc(g[k]*256/100);
+              b_p = b[k];//Math.trunc(b[k]*256/100);
 
-                // colors
-
-              r_p = Math.trunc(r[k]*256/100);
-              g_p = Math.trunc(g[k]*256/100);
-              b_p = Math.trunc(b[k]*256/100);
-
+              if (k<10){
               console.log (k);
               console.log (b_p);
+              }
 
                 color.setRGB( r_p, g_p, b_p );
 
@@ -127,14 +126,17 @@
 
             geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( position_p, 3 ) );
             geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( color_p, 3 ) );
+            geometry.computeBoundingSphere();
+
+            geometry.center();
 
 
             var material = new THREE.PointsMaterial({
               //  color: 0xbf9121,
                 size: 0.01,
-                opacity: 0.6,
-                transparent: true,
-                blending: THREE.AdditiveBlending,
+                //opacity: 0.6,
+                //transparent: true,
+                //blending: THREE.AdditiveBlending,
                 vertexColors: true
             });
 
