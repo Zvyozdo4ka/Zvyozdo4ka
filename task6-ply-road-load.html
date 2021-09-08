@@ -20,9 +20,11 @@
 
     function initialise() {
         // Init renderer
-        renderer = new THREE.WebGLRenderer();
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio( window.devicePixelRatio );
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
+
         renderer.outputEncoding = THREE.sRGBEncoding; //Defines the output encoding of the renderer. Default is THREE.LinearEncoding=3000, THREE.sRGBEncoding = 3001.
 
         // Init scene
@@ -32,10 +34,10 @@
         camera = new THREE.PerspectiveCamera( // value in documentation, by default, almost always
             45, //field of view in degrees
             window.innerWidth / window.innerHeight, //aspect ratio - соотношение сторон
-            0.1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
+            1, // near clip frame - the coordinate of starting point to view on Z axe for frame, z=-n
             1000 //far clip frame, z=-f, z=x=y=0 - view/eye point, frustum view - truncated pyramid - усеченная пирамида
         );
-        camera.position.set(0, 0, 8); // by default x=y=z=0; z is a camera position on z axis, for visualising
+        camera.position.set(0, 0, 9); // by default x=y=z=0; z is a camera position on z axis, for visualising
         scene.add(camera);
 
         // controls
