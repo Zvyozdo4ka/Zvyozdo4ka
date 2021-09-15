@@ -33,16 +33,17 @@
             let raycaster;
             let line;
 
-            const intersection = {
+            var intersection = {
             intersects: false,
             point: new THREE.Vector3(),
             normal: new THREE.Vector3()
         };
 
-            console.log(intersection.normal);
+            console.log("normal", intersection.normal);
 
             const mouse = new THREE.Vector2();
             const intersects = [];
+            const threshold = 0.1;
 
             const textureLoader = new THREE.TextureLoader();
             const decalDiffuse = textureLoader.load( './three.js-dev/examples/textures/decal/decal-diffuse.png' );
@@ -119,6 +120,7 @@
             loadModel();
 
             raycaster = new THREE.Raycaster();
+            raycaster.params.Points.threshold = threshold;
 
             mouseHelper = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 10 ), new THREE.MeshNormalMaterial() );
             mouseHelper.visible = true;
@@ -180,10 +182,10 @@
             raycaster.setFromCamera( mouse, camera );
             raycaster.intersectObject( group, false, intersects );
 
-            console.log("3", intersection.normal);
-            console.log("mouse", mouseHelper.position);
+            console.log("intersects", intersects);
+            console.log("raycaster", raycaster);
 
-            if ( intersects.length > 0 ) {
+            if ( intersects.length ===1 ) {
 
             const p = intersects[ 0 ].point;
             mouseHelper.position.copy( p );
@@ -214,7 +216,13 @@
 
         } else {
 
-            intersection.intersects = false;
+            //intersection.intersects = false;
+                intersection = {
+                    intersects: false,
+                    //point: new THREE.Vector3(),
+                    normal: new THREE.Vector3()
+                };
+                intersects.length = 0;
 
         }
 
@@ -228,7 +236,7 @@
             // gui.add( params, 'clear' );
             // gui.open();
 
-            onWindowResize();
+            //onWindowResize();
             animate();
 
         }
@@ -279,6 +287,7 @@
             function animate() {
 
             requestAnimationFrame( animate );
+            camera.updateMatrixWorld();
 
             renderer.render( scene, camera );
 
