@@ -1,134 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-    <title>three.js webgl - decal splatter</title>
+    <title>Find coordinates</title>
 <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
         </head>
         <body>
-
         <div id="container"></div>
         <div id="info">
             <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - decal splatter<br/>
             click to shoot
         </div>
-
         <script type="module">
 
             import * as THREE from './three.js-dev/build/three.module.js';
-
-            //import {Vector3} from './three.js-dev/src/math/Vector3.js';
-
-            import Stats from './three.js-dev/examples/jsm/libs/stats.module.js';
-            import { GUI } from './three.js-dev/examples/jsm/libs/dat.gui.module.js';
-
             import { OrbitControls } from './three.js-dev/examples/jsm/controls/OrbitControls.js';
-            import { GLTFLoader } from './three.js-dev/examples/jsm/loaders/GLTFLoader.js';
-            import { DecalGeometry } from './three.js-dev/examples/jsm/geometries/DecalGeometry.js';
             import { PLYLoader } from "./three.js-dev/examples/jsm/loaders/PLYLoader.js";         // class PLYLoader
 
             const container = document.getElementById( 'container' );
 
-            let renderer, scene, camera, stats;
+            let renderer, scene, camera;
             let group;
             let raycaster;
             let line;
             let toggle = 0;
             let clock;
+            let p =  new THREE.Vector3();
+            let n;
+            let mouseHelper;
 
-            var intersection = {
+            const intersection = {
             intersects: false,
             point: new THREE.Vector3(),
             normal: new THREE.Vector3()
         };
-            let p=  new THREE.Vector3();
-            let n;
-
-            console.log("normal", intersection.normal);
-
             const mouse = new THREE.Vector2();
             const intersects = [];
-            const threshold = 0.1;
 
-            const textureLoader = new THREE.TextureLoader();
-            const decalDiffuse = textureLoader.load( './three.js-dev/examples/textures/decal/decal-diffuse.png' );
-            const decalNormal = textureLoader.load( './three.js-dev/examples/textures/decal/decal-normal.jpg' );
+            //const position = new THREE.Vector3();
 
-            const decalMaterial = new THREE.MeshPhongMaterial( {
-            specular: 0x444444,
-            map: decalDiffuse,
-            normalMap: decalNormal,
-            normalScale: new THREE.Vector2( 1, 1 ),
-            shininess: 30,
-            transparent: true,
-            depthTest: true,
-            depthWrite: false,
-            polygonOffset: true,
-            polygonOffsetFactor: - 4,
-            wireframe: false
-        } );
-
-            const decals = [];
-            let mouseHelper;
-            const position = new THREE.Vector3();
             const orientation = new THREE.Euler();
             const size = new THREE.Vector3( 10, 10, 10 );
-
-            const params = {
-            minScale: 10,
-            maxScale: 20,
-            rotate: true,
-            clear: function () {
-
-            removeDecals();
-
-        }
-        };
-
             window.addEventListener( 'load', init );
 
-            function init() {
-
-                clock = new THREE.Clock();
-
+        function init() {
+            clock = new THREE.Clock();
             renderer = new THREE.WebGLRenderer( { antialias: true } );
             renderer.setPixelRatio( window.devicePixelRatio );
             renderer.setSize( window.innerWidth, window.innerHeight );
             container.appendChild( renderer.domElement );
-
-            stats = new Stats();
-            container.appendChild( stats.dom );
-
             scene = new THREE.Scene();
-
             camera = new THREE.PerspectiveCamera( 10, window.innerWidth / window.innerHeight, 1, 3000 );
             camera.position.z = 500;
-
             const controls = new OrbitControls( camera, renderer.domElement );
             controls.minDistance = 50;
             controls.maxDistance = 1000;
-
             scene.add( new THREE.AmbientLight( 0x443333 ) );
 
-            const dirLight1 = new THREE.DirectionalLight( 0xffddcc, 1 );
-            dirLight1.position.set( 1, 0.75, 0.5 );
-            scene.add( dirLight1 );
+            const geometry_ = new THREE.BufferGeometry();
+            geometry_.setFromPoints( [ new THREE.Vector3(), new THREE.Vector3() ] );
+            //geometry_.setAttribute( 'array', new THREE.Float32BufferAttribute( position, 3 ) );
 
-            const dirLight2 = new THREE.DirectionalLight( 0xccccff, 1 );
-            dirLight2.position.set( - 1, 0.75, - 0.5 );
-            scene.add( dirLight2 );
+            console.log ("00000 geometry_", geometry_);
 
-            const geometry = new THREE.BufferGeometry();
-            geometry.setFromPoints( [ new THREE.Vector3(), new THREE.Vector3() ] );
-
-            line = new THREE.Line( geometry, new THREE.LineBasicMaterial() );
+            line = new THREE.Line( geometry_, new THREE.LineBasicMaterial() );
             scene.add( line );
 
             loadModel();
 
             raycaster = new THREE.Raycaster();
-            raycaster.params.Points.threshold = threshold;
+      //      raycaster.params.Points.threshold = threshold;
+        //        console.log("raycaster.params.Points.threshold",raycaster.params.Points.threshold);
 
             mouseHelper = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 10 ), new THREE.MeshNormalMaterial() );
             mouseHelper.visible = true;
@@ -145,26 +88,6 @@
 
         } );
 
-        //     window.addEventListener( 'pointerdown', function () {
-        //
-        //     moved = false;
-        //     console.log("down");
-        //
-        // } );
-        //
-        //     window.addEventListener( 'pointerup', function ( event ) {
-        //     console.log("up");
-        //
-        //     if ( moved === false ) {
-        //
-        //     checkIntersection( event.clientX, event.clientY );
-        //
-        //     if ( intersection.intersects ) shoot();
-        //
-        // }
-        //
-        // } );
-
             window.addEventListener( 'pointermove', onPointerMove );
 
             function onPointerMove( event ) {
@@ -176,50 +99,55 @@
 
         }
 
-            console.log("2", intersection.normal);
-
-            function checkIntersection( x, y ) {
+        function checkIntersection( x, y ) {
 
             if ( group === undefined ) {
             return;
-        }
+            }
 
             mouse.x = ( x / window.innerWidth ) * 2 - 1;
             mouse.y = - ( y / window.innerHeight ) * 2 + 1;
 
-            raycaster.setFromCamera( mouse, camera );
-            raycaster.intersectObject( group, false, intersects );
+            raycaster.setFromCamera( mouse.clone(), camera );
+            raycaster.intersectObject( group, true, intersects ); // Checks all intersection between the ray and the object with or without the descendants. Intersections are returned sorted by distance, closest first.
 
-            const intersections = raycaster.intersectObjects( group );
-            intersection.intersects = ( intersections.length ) > 0 ? intersections[ 0 ] : null;
+            if ( (intersects.length > 0) && toggle > 0.02  ) {
 
-            if ( (intersects.length > 0)  && toggle > 0.02  ) {
+                toggle=0;
 
-                toggle = 0;
-
-                console.log("p", p);
                 p = intersects[ 0 ].point;
-                console.log("p", p);
 
-                console.log("mouse", mouseHelper.position);
                 mouseHelper.position.copy( p );
-                console.log("mouse", mouseHelper.position);
 
-                intersection.point = p;
-                console.log(intersection);
+                intersection.point.copy( p );
 
-            n = intersects[ 0 ].face.normal.clone();
-            n.transformDirection( group.matrixWorld );
+                var position_p, color_p;
+                geometry_.setAttribute( 'position_', new THREE.Float32BufferAttribute( position_p, 3 ) );
+                geometry_.setAttribute( 'color_', new THREE.Float32BufferAttribute( color_p, 3 ) );
+                console.log("11 GEOMETRY_", geometry_);
+
+          //  n = intersects[ 0 ].face.normal;
+
+                console.log("n", n);
+
+            /* n.transformDirection( group.matrixWorld );
             n.multiplyScalar( 10 );
             n.add( intersects[ 0 ].point );
 
             intersection.normal.copy( intersects[ 0 ].face.normal );
-            mouseHelper.lookAt( n );
+            intersection.normal.copy( intersects[ 0 ].normal );*/
+            //mouseHelper.lookAt( n );
 
-            const positions = line.geometry.attributes.position;
+            console.log("test");
+
+            const positions = line.geometry.attributes.position; //_p;
+                console.log("positions", positions);
+                console.log("line", line);
             positions.setXYZ( 0, p.x, p.y, p.z );
             positions.setXYZ( 1, n.x, n.y, n.z );
             positions.needsUpdate = true;
+
+                console.log("+line GEOMETRY", geometry_);
 
             console.log(intersection);
 
@@ -232,11 +160,11 @@
         } else {
 
             //intersection.intersects = false;
-                intersection = {
-                    intersects: false,
+               // intersection = {
+                   // intersects: false,
                     //point: new THREE.Vector3(),
-                    normal: new THREE.Vector3()
-                };
+                  //  normal: new THREE.Vector3()
+              //  };
                 intersects.length = 0;
                 toggle += clock.getDelta();
                // p=0;
@@ -244,76 +172,18 @@
         }
 
         }
-
-            // const gui = new GUI();
-            //
-            // gui.add( params, 'minScale', 1, 30 );
-            // gui.add( params, 'maxScale', 1, 30 );
-            // gui.add( params, 'rotate' );
-            // gui.add( params, 'clear' );
-            // gui.open();
-
-            //onWindowResize();
             animate();
-
         }
-
-
-
-            function shoot() {
-
-            position.copy( intersection.point );
-            //orientation.copy( mouseHelper.rotation );
-
-            if ( params.rotate ) orientation.z = Math.random() * 2 * Math.PI;
-
-            const scale = params.minScale + Math.random() * ( params.maxScale - params.minScale );
-            size.set( scale, scale, scale );
-
-            const material = decalMaterial.clone();
-            material.color.setHex( Math.random() * 0xffffff );
-
-            const m = new THREE.Mesh( new DecalGeometry( group, position, orientation, size ), material );
-
-            decals.push( m );
-            scene.add( m );
-
-        }
-
-            function removeDecals() {
-
-            decals.forEach( function ( d ) {
-
-                scene.remove( d );
-
-            } );
-
-            decals.length = 0;
-
-        }
-
             function onWindowResize() {
-
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-
             renderer.setSize( window.innerWidth, window.innerHeight );
-
         }
-
             function animate() {
-
             requestAnimationFrame( animate );
-            camera.updateMatrixWorld();
-
             renderer.render( scene, camera );
-
-            //stats.update();
-
         }
-
             function loadModel() {
-
                 var particles;
                 var loader = new PLYLoader();
                 loader.load('./three.js-dev/examples/models/ply/binary/model.ply',function(geometry){//works with function geometry,'let geometry = new BufferGeometry();'; geometry type is const
@@ -381,11 +251,12 @@
 
                     //group.position.y = 2;
                    // group.position.z = -9;
-                   // group.rotation.x = - Math.PI*1;
+                    group.rotation.x = - Math.PI*1;
                   //  group.rotation.y = - Math.PI*2;
 
                     scene.add( group );
                     group.scale.set(10, 10, 10);
+                    console.log("222222 GEOMETRY", geometry);
                     //render();
                 } );
             }
