@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Find coordinates</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+</head>
+<body>
+<div id="container"></div>
+<div id="info">
+    <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - decal splatter<br/>
+    click to shoot
+</div>
+<script type="module">
+
+    import * as THREE from './three.js-dev/build/three.module.js';
+    import { OrbitControls } from './three.js-dev/examples/jsm/controls/OrbitControls.js';
+    import { PLYLoader } from "./three.js-dev/examples/jsm/loaders/PLYLoader.js";         // class PLYLoader
+    import { DecalGeometry } from './three.js-dev/examples/jsm/geometries/DecalGeometry.js';
+
+    const container = document.getElementById( 'container' );
+
+    let renderer, scene, camera;
+    let group;
+    let raycaster;
+    let line;
+    let toggle = 0;
+    let clock;
+    let p =  new THREE.Vector3();
+    let n;
+    let mouseHelper;
+
+    let sphereInter;
+
+    const intersection = {
+        intersects: false,
+        point: new THREE.Vector3(),
+        normal: new THREE.Vector3()
+    };
+
+    const params = {
+        minScale: 10,
+        maxScale: 20,
+        rotate: true,
+        clear: function () {
+
+            removeDecals();
+
+        }
+    };
+
+    const decalMaterial = new THREE.MeshPhongMaterial( {
+        specular: 0x444444,
+        //map: decalDiffuse,
+        //normalMap: decalNormal,
+        normalScale: new THREE.Vector2( 1, 1 ),
+        shininess: 30,
+        transparent: true,
+        depthTest: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: - 4,
+        wireframe: false
+    } );
+
+    let mesh;
+
+    const mouse = new THREE.Vector2();
+    const intersects = [];
+
+    const position = new THREE.Vector3();
+
+    const orientation = new THREE.Euler();
+    const size = new THREE.Vector3( 10, 10, 10 );
+    window.addEventListener( 'load', init );
+
+    function init() {
+        clock = new THREE.Clock();
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        container.appendChild( renderer.domElement );
+        scene = new THREE.Scene();
+        //scene.background = new THREE.Color( 0xbfe3dd );
+        camera = new THREE.PerspectiveCamera( 10, window.innerWidth / window.innerHeight, 1, 3000 );
+        camera.position.z = 500;
+        const controls = new OrbitControls( camera, renderer.domElement );
+        controls.minDistance = 50;
+        controls.maxDistance = 1000;
+        scene.add( new THREE.AmbientLight( 0x443333 ) );
+
+        let geometry_ = new THREE.BufferGeometry();
+        geometry_.setFromPoints( [ new THREE.Vector3(), new THREE.Vector3() ] );
+        //geometry_.setAttribute( 'array', new THREE.Float32BufferAttribute( position, 3 ) );
+
+        console.log ("00000 geometry_", geometry_);
+
+        line = new THREE.Line( geometry_, new THREE.LineBasicMaterial() );
+        scene.add( line );
+
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        loadModel();
+        //console.log ("load geometry_", geometry_);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        raycaster = new THREE.Raycaster();
+        //      raycaster.params.Points.threshold = threshold;
+        //        console.log("raycaster.params.Points.threshold",raycaster.params.Points.threshold);
+
+        mouseHelper = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 10 ), new THREE.MeshNormalMaterial() );
+        mouseHelper.visible = true;
+        //mouseHelper.visible = false;
+        scene.add( mouseHelper );
+
+        window.addEventListener( 'resize', onWindowResize );
+
+        let moved = false;
+
+        controls.addEventListener( 'change', function () {
+
+            moved = true;
+
+        } );
+
+        animate();
+    }
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+    }
+    function animate() {
+        requestAnimationFrame( animate );
+        renderer.render( scene, camera );
+    }
+    function loadModel() {
+        var particles;
+        var loader = new PLYLoader();
+        loader.load('./three.js-dev/examples/models/ply/binary/model.ply',function(geometry){//works with function geometry,'let geometry = new BufferGeometry();'; geometry type is const
+
+            // geometry consists of color, normal, position, Prototype
+            particles = geometry.attributes.color.count; // 298892 points
+            var positions = geometry.attributes.position.array; // x, y, z is going in sequence in array positions
+            var colors = geometry.attributes.color.array; // r, g, b is going in sequence in array colors
+
+            var x_=[], y_=[], z_=[], r=[], g=[], b=[];
+            var j=0;
+
+            for (var i=0; i<positions.length; i=i+3){
+                x_[j]=positions[i];
+                y_[j]=positions[i+1];
+                z_[j]=positions[i+2];
+
+                r[j]=colors[i];
+                g[j]=colors[i+1];
+                b[j]=colors[i+2];
+
+                j=j+1;
+            }
+
+            const position_p = [];
+            const color_p = [];
+            const color = new THREE.Color();
+            var x_p, y_p, z_p, r_p, g_p, b_p;
+
+            for ( var k = 0; k < particles; k++ ) {
+
+                // positions
+
+                x_p = x_[k];
+                y_p = y_[k];
+                z_p = z_[k];
+                position_p.push( x_p, y_p, z_p );
+
+                r_p = r[k];
+                g_p = g[k];
+                b_p = b[k];
+
+                color.setRGB( r_p, g_p, b_p );
+
+                color_p.push( color.r, color.g, color.b );
+            }
+
+            geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( position_p, 3 ) );
+            geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( color_p, 3 ) );
+
+            geometry.computeBoundingSphere(); // ???
+
+            geometry.center();
+
+            var material = new THREE.PointsMaterial({
+                size: 0.01,
+                vertexColors: true
+            });
+
+            group = new THREE.Points(geometry, material);
+
+            //group.position.y = 2;
+            group.rotation.x = - Math.PI*1;
+
+            scene.add( group );
+            group.scale.set(10, 10, 10); // appropriate proportion on the scene
+
+            let moved = false;
+
+            const geometry_sphere = new THREE.SphereGeometry( 1 );
+            const material_sphere = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+            sphereInter = new THREE.Mesh( geometry_sphere, material_sphere );
+            sphereInter.visible = false;
+            scene.add( sphereInter );
+
+            window.addEventListener( 'pointerdown', function () {
+                moved = false;
+            } );
+
+            window.addEventListener( 'pointerup', function ( event ) {
+
+                if ( moved === false ) {
+                    checkIntersection( event.clientX, event.clientY) ; //, geometry_ );
+                    if ( intersection.intersects ) shoot();
+                }
+            } );
+
+            function onPointerMove( event ) {
+
+                if ( event.isPrimary ) {
+                    checkIntersection( event.clientX, event.clientY ) ; //, geometry_ );
+                }
+            }
+
+            window.addEventListener( 'pointermove', onPointerMove );
+
+            function shoot() {
+
+                position.copy( intersection.point );
+
+                if ( moved === false ) {
+
+                    sphereInter.visible = true;
+                    sphereInter.position.copy( position );
+                    line.position.copy(position);
+
+                } else {
+
+                    sphereInter.visible = false;
+                }
+
+                renderer.render( scene, camera );
+            }
+
+            function checkIntersection( x, y, geometry_ ) {
+
+                if ( group === undefined ) {
+                    return;
+                }
+
+                mouse.x = ( x / window.innerWidth ) * 2 - 1;
+                mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
+                raycaster.setFromCamera( mouse.clone(), camera );
+                raycaster.intersectObject( group, true, intersects ); // Checks all intersection between the ray and the object with or without the descendants. Intersections are returned sorted by distance, closest first.
+
+                if ( (intersects.length > 0) && toggle > 0.02  ) {
+
+                    toggle=0;
+                    p = intersects[ 0 ].point; // the point of intersection
+                    mouseHelper.position.copy( p ); // mousehelper should be at point
+                    intersection.point.copy( p );
+
+                    const positions = line.geometry.attributes.position; //_p;
+
+                    console.log("line", line);
+
+                    positions.setXYZ( 0, p.x, p.y, p.z );
+
+                    positions.needsUpdate = true;
+
+                    console.log("+GEOMETRY_", geometry_);
+
+                    console.log(intersection);
+
+                    console.log("{x:", intersection.point.x,", y:", intersection.point.y, ",z:", intersection.point.z, "}");
+
+                    intersection.intersects = true;
+
+                    intersects.length = 0;
+
+                } else {
+
+                    //intersection.intersects = false;
+                    // intersection = {
+                    // intersects: false,
+                    //point: new THREE.Vector3(),
+                    //  normal: new THREE.Vector3()
+                    //  };
+                    intersects.length = 0;
+                    toggle += clock.getDelta();
+                    // p=0;
+
+                }
+
+            }
+            ////////////////////////////////////////
+
+            // return geometry;
+            //render();
+        } );
+
+    }
+
+</script>
+
+</body>
+</html>
