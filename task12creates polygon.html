@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>creates polygon with </title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+<div id="container"></div>
+<div id="info">
+    <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - decal splatter<br/>
+    click to shoot
+</div>
+<script type="module">
+    import * as THREE from './three.js-dev/build/three.module.js';
+    import { OrbitControls } from './three.js-dev/examples/jsm/controls/OrbitControls.js';
+    import { PLYLoader } from "./three.js-dev/examples/jsm/loaders/PLYLoader.js";         // class PLYLoader
+
+    let points_line = [];
+    let points_line_analyst = [];
+    let glance = 11;
+
+    let object_exist = false;
+    let left_last_signal = false;
+    let moved = false;
+    let toggle = 0;
+    let renderer, scene, camera;
+    let group;
+    let raycaster;
+    let clock;
+    let p =  new THREE.Vector3();
+    let mouseHelper;
+    let sphereInter;
+    let intersection = {
+        intersects: false,
+        point: new THREE.Vector3(),
+    };
+    let mesh;
+
+    const mouse = new THREE.Vector2();
+    const intersects = [];
+    const position = new THREE.Vector3();
+    const material_red = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+
+    let geometry = new THREE.BufferGeometry();
+    let geometry__ = new THREE.BufferGeometry().setFromPoints( points_line );
+    let material__ = new THREE.MeshBasicMaterial( { color: glance * 0xffa100 } );
+    let line__ = new THREE.Line( geometry__, material__ );
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    camera = new THREE.PerspectiveCamera( 10, window.innerWidth / window.innerHeight, 1, 3000 );
+    container.appendChild( renderer.domElement );
+
+    let controls = new OrbitControls( camera, renderer.domElement );
+    let geometry_analyst = new THREE.BufferGeometry().setFromPoints( points_line_analyst );
+    let line_analyst = new THREE.Line( geometry_analyst, material_red );
+
+    window.addEventListener( 'load', init );
+
+    function init() {
+
+        clock = new THREE.Clock();
+
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        scene = new THREE.Scene();
+        //scene.background = new THREE.Color( 0xbfe3dd );
+
+        camera.position.z = 500;
+
+        controls.target = new THREE.Vector3(0, 0, 0);
+        controls.minDistance = 50;
+        controls.maxDistance = 1000;
+
+        loadModel();
+
+        window.addEventListener( 'pointermove', onPointerMove );
+
+        window.addEventListener('mousedown', function (event) {
+            switch (event.button) {
+                case 0:
+                    //alert('Left Mouse button pressed.');
+                    LeftClick(event);
+                    break;
+                case 1:
+                    alert('Middle Mouse button pressed.');
+                    break;
+                case 2:
+                    //alert('Right Mouse button pressed.');
+                    RightClick();
+
+                    break;
+                default:
+                    alert('You have a strange Mouse!');
+            }
+            // e.button === 0: the left button is clicked
+            // e.button === 1: the middle button is clicked
+            // e.button === 2: the right button is clicked
+            // e.button === 3: the `Browser Back` button is clicked
+        });
+
+       raycaster = new THREE.Raycaster();
+
+        mouseHelper = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 10 ), new THREE.MeshNormalMaterial() );
+        mouseHelper.visible = true;
+        scene.add( mouseHelper );
+
+        line_analyst.visible = true;
+        scene.add( line_analyst );
+
+        window.addEventListener( 'resize', onWindowResize );
+
+        controls.addEventListener( 'change', function () {
+
+            moved = true;
+
+        } );
+
+        animate();
+    }
+
+    function PointDown () {
+        moved = false;
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+    }
+    function animate() {
+        requestAnimationFrame( animate );
+        renderer.render( scene, camera );
+    }
+    function loadModel() {
+        var particles;
+        var loader = new PLYLoader();
+        loader.load('./three.js-dev/examples/models/ply/binary/model.ply',function(geometry){//works with function geometry,'let geometry = new BufferGeometry();'; geometry type is const
+
+            // geometry consists of color, normal, position, Prototype
+            particles = geometry.attributes.color.count; // 298892 points
+            var positions = geometry.attributes.position.array; // x, y, z is going in sequence in array positions
+            var colors = geometry.attributes.color.array; // r, g, b is going in sequence in array colors
+
+            var x_=[], y_=[], z_=[], r=[], g=[], b=[];
+            var j=0;
+
+            for (var i=0; i<positions.length; i=i+3){
+                x_[j]=positions[i];
+                y_[j]=positions[i+1];
+                z_[j]=positions[i+2];
+
+                r[j]=colors[i];
+                g[j]=colors[i+1];
+                b[j]=colors[i+2];
+
+                j=j+1;
+            }
+
+            const position_p = [];
+            const color_p = [];
+            const color = new THREE.Color();
+            var x_p, y_p, z_p, r_p, g_p, b_p;
+
+            for ( var k = 0; k < particles; k++ ) {
+
+                // positions
+                x_p = x_[k];
+                y_p = y_[k];
+                z_p = z_[k];
+                position_p.push( x_p, y_p, z_p );
+
+                r_p = r[k];
+                g_p = g[k];
+                b_p = b[k];
+                color.setRGB( r_p, g_p, b_p );
+                color_p.push( color.r, color.g, color.b );
+            }
+            geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( position_p, 3 ) );
+            geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( color_p, 3 ) );
+            geometry.center();
+            var material = new THREE.PointsMaterial({
+                size: 0.01,
+                vertexColors: true
+            });
+            group = new THREE.Points(geometry, material);
+            group.rotation.x = - Math.PI*1;
+            scene.add( group );
+            group.scale.set(10, 10, 10); // appropriate proportion on the scene
+        } );
+
+        const geometry_sphere = new THREE.SphereGeometry( 1 );
+        sphereInter = new THREE.Mesh( geometry_sphere, material_red );
+        sphereInter.visible = false;
+        scene.add( sphereInter );
+    }
+
+    function DrawLine(points_line){
+        geometry__ = new THREE.BufferGeometry().setFromPoints( points_line );
+        material__ = new THREE.MeshBasicMaterial( { color: glance * 0xf6a106 } );
+        line__ = new THREE.Line( geometry__, material__ );
+        scene.add( line__ );
+
+        left_last_signal = true;
+    }
+
+    function RightClick(){
+
+        if ( (object_exist === true) & ( left_last_signal === true) ) {
+
+            points_line_analyst[0] = points_line[0];
+            points_line_analyst[1] = sphereInter.position;
+            DrawLine(points_line_analyst);
+            sphereInter.visible = false;
+
+            points_line = [];
+            // points_line[0] = sphereInter.position;
+            // points_line[1] = mouseHelper.position;
+            // DrawLine(points_line);
+
+            glance = glance + 11;
+        }
+            left_last_signal = false;
+            points_line = [];
+            points_line_analyst = [];
+    }
+
+    function LeftClick (event) {
+        if ( ( moved === false) || controls.mouseButtons) {
+
+            object_exist = true;
+            checkIntersection( event.clientX, event.clientY, geometry) ;
+
+            if ( intersection.intersects ) {
+                shoot(intersection.point);
+            }
+        }
+    }
+
+    function shoot(point) {
+
+        position.copy( intersection.point );
+        points_line.push(point.clone());
+
+        if ( moved === false || controls.mouseButtons) {
+
+            sphereInter.visible = true;
+            sphereInter.position.copy( position );
+            DrawLine(points_line);
+
+        } else {
+            sphereInter.visible = false;
+        }
+
+        renderer.render( scene, camera );
+    }
+
+    function checkIntersection( x, y, geometry ) {
+
+        if ( group === undefined ) {
+            return;
+        }
+
+        mouse.x = ( x / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+        raycaster.setFromCamera( mouse.clone(), camera );
+        raycaster.intersectObject( group, true, intersects ); // Checks all intersection between the ray and the object with or without the descendants. Intersections are returned sorted by distance, closest first.
+
+        if ( (intersects.length > 0) && toggle > 0.02  ) {
+
+            toggle=0;
+            p = intersects[ 0 ].point; // the point of intersection
+            mouseHelper.position.copy( p ); // mousehelper should be at point
+            intersection.point.copy( p );
+
+            points_line_analyst = [];
+
+            intersection.intersects = true;
+            intersects.length = 0;
+
+        } else {
+
+            intersects.length = 0;
+            toggle += clock.getDelta();
+            p=0;
+        }
+    }
+
+    function onPointerMove( event ) {
+
+        if ( event.isPrimary ) {
+            checkIntersection( event.clientX, event.clientY, geometry ) ;
+        }
+    }
+</script>
+</body>
+</html>
