@@ -52,10 +52,16 @@
 
     //let points_line_supplement = [];
     //let geometry_supplement = new THREE.BufferGeometry().setFromPoints( points_line_supplement );
+
     const geometry_supplement = new THREE.BufferGeometry();
     geometry_supplement.setFromPoints( [ new THREE.Vector3(), new THREE.Vector3() ] );
     let line_supplement = new THREE.Line(geometry_supplement, material_red);
-    /////
+
+    const geometry_supplement2 = new THREE.BufferGeometry();
+    geometry_supplement2.setFromPoints( [ new THREE.Vector3(), new THREE.Vector3() ] );
+    let line_supplement2 = new THREE.Line(geometry_supplement2, material_red);
+
+    ///
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     camera = new THREE.PerspectiveCamera( 10, window.innerWidth / window.innerHeight, 1, 3000 );
@@ -118,8 +124,13 @@
 
         //geometry_supplement = new THREE.BufferGeometry().setFromPoints(points_line_supplement);
         //line_supplement = new THREE.Line(geometry_supplement, material_red);
+
         line_supplement.visible = true;
         scene.add( line_supplement );
+
+        line_supplement2.visible = true;
+        scene.add( line_supplement2 );
+
         ///////
 
         line_analyst.visible = true;
@@ -228,19 +239,17 @@
             points_line_analyst[0] = points_line[0];
             points_line_analyst[1] = sphereInter.position;
             DrawLine(points_line_analyst);
+
             sphereInter.visible = false;
+            left_last_signal = false;
+            line_supplement.visible = false;
+            line_supplement2.visible = false;
 
             points_line = [];
-            // points_line[0] = sphereInter.position;
-            // points_line[1] = mouseHelper.position;
-            // DrawLine(points_line);
+            points_line_analyst = [];
 
             glance = glance + 11;
         }
-            left_last_signal = false;
-            points_line = [];
-            points_line_analyst = [];
-            line_supplement.visible = false;
     }
 
     function LeftClick (event) {
@@ -283,23 +292,6 @@
         raycaster.setFromCamera( mouse.clone(), camera );
         raycaster.intersectObject( group, true, intersects ); // Checks all intersection between the ray and the object with or without the descendants. Intersections are returned sorted by distance, closest first.
 
-        // if (points_line[0]) {
-        //
-        //     //points_line_supplement = [];
-        //     points_line_supplement[0] = points_line[0];
-        //     console.log("000000", points_line_supplement[0]);
-        //
-        //     //mouseHelper.position.copy( mouseHelper )
-        //     points_line_supplement[1] = intersects[ 0 ].point ; //= mouseHelper.position;
-        //     console.log("1111111", points_line_supplement[1]);
-        //
-        //     geometry_supplement = new THREE.BufferGeometry().setFromPoints(points_line_supplement);
-        //     line_supplement = new THREE.Line(geometry_supplement, material_red);
-        //     line_supplement.visible = true;
-        //     scene.add(line_supplement);
-        //     console.log("line_supplement", line_supplement);
-        // }
-
         if ( (intersects.length > 0) && toggle > 0.02  ) {
 
             toggle=0;
@@ -307,22 +299,29 @@
             mouseHelper.position.copy( p ); // mousehelper should be at point
             intersection.point.copy( p );
 
-            //points_line_analyst = [];
             intersection.intersects = true;
             intersects.length = 0;
 
-            //////
             if (points_line[0]) {
+
                 line_supplement.visible = true;
-                console.log("geometry_supplement", geometry_supplement);
+                line_supplement2.visible = true;
+
                 let positions = line_supplement.geometry.attributes.position;
                 positions.setXYZ(0, points_line[0].x, points_line[0].y, points_line[0].z);
                 positions.setXYZ(1, p.x, p.y, p.z);
                 positions.needsUpdate = true;
-                console.log("positions 000000", positions[0]);
-                console.log("p.y", p.y);
-                console.log("positions 111", positions[1]);
-                console.log("points_line_analyst[0] ", points_line[0].y);
+
+                let positions2 = line_supplement2.geometry.attributes.position;
+                var pop = points_line.length;
+                positions2.setXYZ(0, points_line[pop-1].x, points_line[pop-1].y, points_line[pop-1].z);
+                positions2.setXYZ(1, p.x, p.y, p.z);
+                positions2.needsUpdate = true;
+
+                // console.log("positions 000000", positions2[0]);
+                // console.log("p.y", p.y);
+                // console.log("positions 111", positions2[1]);
+                // console.log("points_line_analyst[0] ", points_line[0].y);
             }
             //////
 
