@@ -247,7 +247,6 @@
 
         if ( ( moved === false) || controls.mouseButtons) {
             object_exist = true;
-            line_supplement.visible = true;
             checkIntersection( event.clientX, event.clientY) ;
 
             if ( intersection.intersects ) {
@@ -314,6 +313,7 @@
 
             //////
             if (points_line[0]) {
+                line_supplement.visible = true;
                 console.log("geometry_supplement", geometry_supplement);
                 let positions = line_supplement.geometry.attributes.position;
                 positions.setXYZ(0, points_line[0].x, points_line[0].y, points_line[0].z);
